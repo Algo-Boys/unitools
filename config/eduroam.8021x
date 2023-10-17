@@ -1,0 +1,10 @@
+[Security]
+EAP-Method=PEAP
+EAP-Identity=zx...
+EAP-PEAP-CACert=/opt/eduroam.crt
+EAP-PEAP-Phase2-Method=MSCHAPV2
+EAP-PEAP-Phase2-Identity=zx...@uni-tuebingen.de
+EAP-PEAP-Phase2-Password-Hash=...
+
+[Settings]
+AutoConnect=true

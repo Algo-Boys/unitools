@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+# for crontab support
+export XAUTHORITY=/home/melvin/.Xauthority
+export DISPLAY=:0
+export XDG_RUNTIME_DIR=/run/user/1000
+export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+
+# link to rss feed (Startseite > Service > Persönliche Einstellungen > Kommunikationskanäle anpassen > Feed > abonnieren)
+url="..."
+
+wget -q "$url" -O /tmp/webchange_new
+
+# xq needs python-yq
+xq '.["rdf:RDF"].item.[].title' </tmp/webchange_new | sponge /tmp/webchange_new_diff
+xq '.["rdf:RDF"].item.[].title' </tmp/webchange_current | sponge /tmp/webchange_current_diff
+
+if ! cmp -s /tmp/webchange_new_diff /tmp/webchange_current_diff >/dev/null; then
+	notify-send -t 0 -u critical "ALMA changed!" "$(date)"
+fi
+
+mv /tmp/webchange_new /tmp/webchange_current

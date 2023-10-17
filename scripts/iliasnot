@@ -1,0 +1,64 @@
+#!/bin/python3
+# WARNING: Only use this if you are allowed to scrape ILIAS!
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import time
+import subprocess
+
+driver = webdriver.Chrome()
+
+driver.get("https://ovidius.uni-tuebingen.de")
+driver.find_element(By.ID, "shib_login_link").click()
+driver.find_element(By.ID, "username").send_keys("zx...")
+driver.find_element(By.ID, "password").send_keys("...")
+driver.find_elements(By.CLASS_NAME, "form-button")[0].click()
+
+courses = [
+    {
+        "name": "...",
+        "url": "https://ovidius.uni-tuebingen.de/ilias3/goto.php?target=...&client_id=pr02",
+        "last": [],
+    },
+]
+
+while True:
+    for course in courses:
+        driver.get(course["url"])
+        rows = driver.find_elements(By.CLASS_NAME, "ilObjListRow")
+
+        elements = []
+        for row in rows:
+            title = row.find_elements(
+                By.CSS_SELECTOR, "a.il_ContainerItemTitle"
+            )[0].text
+            descs = [
+                x.text
+                for x in row.find_elements(By.CLASS_NAME, "il_Description")
+            ]
+            props = [
+                x.text
+                for x in row.find_elements(
+                    By.CSS_SELECTOR, "span.il_ItemProperty"
+                )
+            ]
+            s = title + " - " + (" ".join(descs)) + (" ".join(props))
+            elements.append(s)
+
+        diffs = [item for item in elements if item not in course["last"]]
+        local = time.localtime()
+        time_txt = time.strftime("%I:%M:%S", local)
+        if len(diffs) > 0 and len(course["last"]) > 0:
+            print(f'{time_txt}: {course["name"]}: CHANGES', "\n".join(diffs))
+            subprocess.Popen(
+                [
+                    "notify-send",
+                    "ILIAS CHANGES " + course["name"],
+                    "".join(diffs),
+                ]
+            )
+        else:
+            print(f'{time_txt}: {course["name"]}: No changes')
+        course["last"] = elements
+        time.sleep(1)
+    time.sleep(60)
